@@ -186,4 +186,3 @@ cd slave && pio run -t upload
 | [`docs/电路说明文档.md`](docs/电路说明文档.md)                 | 电路与接线说明             |
 | [`docs/舵机说明文档.md`](docs/舵机说明文档.md)                 | 塔吊舵机说明               |
 | [`docs/Emm_V5.0步进闭环驱动说明书Rev1.3.md`](docs/Emm_V5.0步进闭环驱动说明书Rev1.3.md) | EMM42 驱动手册 |
-| [`docs/ROS局部规划器与DWA算法说明.md`](docs/ROS局部规划器与DWA算法说明.md) | 上位机规划算法参考 |
