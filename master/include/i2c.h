@@ -18,6 +18,8 @@ extern "C" {
 extern I2C_HandleTypeDef hi2c1;
 
 void MX_I2C1_Init(void);
+/* I2C 外设 BUSY 死锁恢复, 返回最终 BUSY 状态 (0=正常) */
+uint8_t I2C1_RecoverBusy(void);
 
 #ifdef __cplusplus
 }

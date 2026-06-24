@@ -21,6 +21,7 @@
 #include "master_comm.h"
 #include "tower_crane.h"
 #include "m5_motor.h"
+#include "ssd1306.h"
 #include "byte_utils.h"
 #include <string.h>
 #include <stdio.h>
@@ -28,7 +29,7 @@
 void SystemClock_Config(void);
 
 /* ========== 固件版本 ========== */
-#define FIRMWARE_VERSION  "chassis v1.1.0"
+#define FIRMWARE_VERSION  "chassis v1.2.0"
 
 /* ========== 传感器命令定义 ========== */
 #define CMD_SENSOR_GET_IMU  (0x01U)
@@ -142,6 +143,22 @@ static void PrintBootBanner(void)
     }
 }
 
+/* ========== I2C 启动诊断 (USART1 打印一行地址报告) ==========
+ * 总线扫描只在启动时跑一次, 便于确认 OLED(0x3C)/IMU(0x50) 是否在线。
+ */
+static void PrintI2CScan(void)
+{
+    char buf[96];
+    int n;
+    uint8_t found_oled = (HAL_I2C_IsDeviceReady(&hi2c1, (uint16_t)(0x3C << 1), 2, 10) == HAL_OK);
+    uint8_t found_imu  = (HAL_I2C_IsDeviceReady(&hi2c1, (uint16_t)(0x50 << 1), 2, 10) == HAL_OK);
+    n = snprintf(buf, sizeof(buf),
+                 "[I2C] OLED(0x3C)=%s  IMU(0x50)=%s  init_fail=%d\r\n",
+                 found_oled ? "OK" : "--", found_imu ? "OK" : "--",
+                 OLED_GetInitFail());
+    if (n > 0) DMA_UART1_TxSend((const uint8_t *)buf, (uint16_t)n, 20);
+}
+
 /* ========== ERR Report (FUNC=0x01, CMD=0x01) ========== */
 #define FUNC_SYSTEM       (0x01U)
 #define CMD_SYS_ERROR     (0x01U)
@@ -249,6 +266,32 @@ static void on_host_frame(const uint8_t *frame_buf, uint16_t frame_len, void *us
             }
             break;
 
+        case FUNC_OLED:
+            switch (header->cmd)
+            {
+                case CMD_OLED_CLEAR:
+                    OLED_Clear();
+                    break;
+
+                case CMD_OLED_SHOW_TEXT:
+                    /* payload: page(1B) + col(1B) + ASCII 文本 */
+                    if (payload_len >= 2)
+                    {
+                        uint8_t page = payload[0];
+                        uint8_t col  = payload[1];
+                        char text[33];
+                        uint16_t tlen = payload_len - 2;
+                        if (tlen > sizeof(text) - 1) tlen = sizeof(text) - 1;
+                        memcpy(text, &payload[2], tlen);
+                        text[tlen] = '\0';
+                        OLED_ShowString(page, col, text);
+                    }
+                    break;
+
+                default: break;
+            }
+            break;
+
         default: break;
     }
 }
@@ -274,6 +317,15 @@ int main(void)
     MX_USART1_UART_Init();
     MX_USART2_UART_Init();
     MX_I2C1_Init();
+
+    /* OLED 初始化 (I2C1, SSD1306 128x64) */
+    OLED_Init(&hi2c1);
+    /* 点屏硬件测试: 先全亮 1 秒 (确认面板/电荷泵), 再显示文字 */
+    OLED_FillTest(0xFF);
+    HAL_Delay(1000);
+    OLED_Clear();
+    OLED_ShowString(0, 0, "26AUTOGO");
+    OLED_ShowString(2, 0, "READY");
 
     MComm_Init();
     TowerCrane_Init();
@@ -305,6 +357,8 @@ int main(void)
 
     /* 启动信息 */
     PrintBootBanner();
+    /* I2C 总线扫描 + OLED 地址诊断 (OLED 不亮时看 USART1 输出定位) */
+    PrintI2CScan();
 
     uint32_t last_health_tick = 0;
     uint32_t last_imu_tick = 0;

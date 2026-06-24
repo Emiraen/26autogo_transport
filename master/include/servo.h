@@ -49,7 +49,7 @@ typedef enum {
  */
 #define PLATE_SLOT_COUNT         3U
 #define PLATE_STEP_DEG           120.0f
-#define PLATE_HOME_DEG           142.7f       /* 初始位置 */
+#define PLATE_HOME_DEG           133.0f       /* 初始位置 */
 #define PLATE_ANGLE_MAX_DEG      360.0f       /* 物料盘上限,>270° */
 
 /* 塔吊底座两个工位
@@ -57,8 +57,8 @@ typedef enum {
  *   即 logical 0° 对应的 PWM 角 = servo_zero_offsets.json 中 BASE 的 zero_pwm_deg
  *   (servo 1: zero_pwm = 100°)
  */
-#define BASE_HOME_DEG            81.6f     /* 初始位置 (= zero_pwm 100°) */
-#define BASE_WORK_DEG            264.0f      /* 工作位置 */
+#define BASE_HOME_DEG            81.0f     /* 初始位置 (= zero_pwm 100°) */
+#define BASE_WORK_DEG            260.0f      /* 工作位置 */
 
 /* 爪子默认开合角 (可通过 Servo_SetClawAngles 修改) */
 #define CLAW_OPEN_DEG_DEFAULT    187.0f

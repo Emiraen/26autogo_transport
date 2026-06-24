@@ -49,6 +49,7 @@ typedef enum {
     FUNC_CHASSIS = 0x02U,
     FUNC_SERVO   = 0x03U,
     FUNC_SENSOR  = 0x04U,
+    FUNC_OLED    = 0x05U,
 } ProtocolFuncId;
 
 typedef enum {
@@ -73,7 +74,12 @@ typedef enum {
     CMD_SERVO_NEXT_PICK    = 0x09U,
 } ProtocolServoCmd;
 
-/*--------------------------------- 解析器 ----------------------------------*/
+/* FUNC_OLED (0x05) 子命令 —— OLED 显示控制 */
+typedef enum {
+    CMD_OLED_CLEAR     = 0x01U,   /* 无 payload, 清屏 */
+    CMD_OLED_SHOW_TEXT = 0x02U,   /* page(1B) + col(1B) + ASCII 文本(≤ 32B) */
+} ProtocolOledCmd;
+
 
 /* 完整帧回调 (CRC 已校验) */
 typedef void (*protocol_frame_cb)(const uint8_t *frame_buf, uint16_t frame_len, void *user);
